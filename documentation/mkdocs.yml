@@ -1,0 +1,25 @@
+site_name: ShopProject
+
+nav:
+  - About: index.md
+  - Tasks: tasks.md
+  - Examples: examples.md
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.code.annotation
+    - content.code.copy
+
+markdown_extensions:
+  - pymdownx.superfences:
+  - tables:
+  - pymdownx.highlight:
+      linenums: true
+      guess_lang: true
