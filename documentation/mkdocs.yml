@@ -1,0 +1,13 @@
+site_name: FastAPI project
+
+nav:
+  - About: index.md
+  - Examples: examples.md
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - search.suggest
+    - search.highlight
+    - content.code.copy
