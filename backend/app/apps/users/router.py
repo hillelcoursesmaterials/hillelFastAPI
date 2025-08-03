@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status
 
 from .schemas import RegisterUserSchema, RegisteredUserSchema
+from apps.auth.password_handler import PasswordEncrypt
 
 router_users = APIRouter()
 
