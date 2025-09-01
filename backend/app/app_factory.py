@@ -6,7 +6,12 @@ from settings import settings
 
 from apps.info.router import info_router
 from apps.users.router import router_users
+import sentry_sdk
 
+sentry_sdk.init(
+    dsn=settings.SENTRY_DNS,
+    send_default_pii=True,
+)
 
 def get_application() -> FastAPI:
     app = FastAPI(

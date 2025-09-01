@@ -14,6 +14,9 @@ async def get_backend_info() -> BaseBackendInfoSchema:
     return {"backend": socket.gethostname(), "another_key": "fake value"}
 
 
+
+
+
 @info_router.get("/database")
 async def get_database_info() -> DatabaseInfoSchema:
     """Get current database info"""

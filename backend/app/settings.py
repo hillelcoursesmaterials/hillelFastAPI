@@ -24,7 +24,7 @@ class PostgresSettings(BaseSettings):
 
 
 class Settings(CoreSettings, PostgresSettings):
-    pass
+    SENTRY_DNS: str
 
 
 @lru_cache()
