@@ -2,6 +2,7 @@ import socket
 
 from fastapi import APIRouter
 from settings import settings
+
 from .schemas import BaseBackendInfoSchema, DatabaseInfoSchema
 
 info_router = APIRouter()
@@ -12,15 +13,6 @@ async def get_backend_info() -> BaseBackendInfoSchema:
     """Get current backend info"""
     # BaseBackendInfoSchema(**{"backend": socket.gethostname()})
     return {"backend": socket.gethostname(), "another_key": "fake value"}
-
-
-
-
-
-
-
-
-
 
 
 @info_router.get("/database")
