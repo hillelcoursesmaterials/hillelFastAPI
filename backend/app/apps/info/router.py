@@ -19,6 +19,10 @@ async def get_backend_info() -> BaseBackendInfoSchema:
 
 
 
+
+
+
+
 @info_router.get("/database")
 async def get_database_info() -> DatabaseInfoSchema:
     """Get current database info"""
