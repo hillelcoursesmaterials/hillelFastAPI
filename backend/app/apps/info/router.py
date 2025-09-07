@@ -1,7 +1,7 @@
-import logging
 import socket
 
 from fastapi import APIRouter
+from services.betterstack_service import betterstack_logger
 from settings import settings
 
 from .schemas import BaseBackendInfoSchema, DatabaseInfoSchema
@@ -12,10 +12,25 @@ info_router = APIRouter()
 @info_router.get("/backend")
 async def get_backend_info() -> BaseBackendInfoSchema:
     """Get current backend info"""
-    logging.error(
-        "some info2",
+    # logging.error(
+    #     "some info333",
+    #     extra={
+    #         "user_id": 123,
+    #         "debug_info": {"function": "get_backend_info", "status": "OK"},
+    #     },
+    # )
+    #
+    betterstack_logger.info(
+        "some info29999",
         extra={
-            "user_id": 123,
+            "user_id": 234,
+            "debug_info": {"function": "get_backend_info", "status": "OK"},
+        },
+    )
+    betterstack_logger.error(
+        "some info2777",
+        extra={
+            "user_id": 555,
             "debug_info": {"function": "get_backend_info", "status": "OK"},
         },
     )
