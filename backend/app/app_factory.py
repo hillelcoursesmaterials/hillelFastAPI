@@ -1,4 +1,3 @@
-from apps.auth.router import router_auth
 from apps.info.router import info_router
 from apps.users.router import router_users
 from fastapi import FastAPI, Request
@@ -18,7 +17,6 @@ def get_application() -> FastAPI:
         default_response_class=ORJSONResponse,
     )
     app.include_router(router_users, prefix="/users", tags=["Users"])
-    app.include_router(router_auth, prefix="/auth", tags=["Auth"])
 
     if settings.DEBUG:
         app.include_router(info_router, prefix="/info", tags=["INFO"])
