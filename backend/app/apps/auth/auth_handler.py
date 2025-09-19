@@ -5,6 +5,7 @@ import jwt
 from apps.users.crud import User, user_manager
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from services.redis_service import redis_service
 from settings import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -59,6 +60,11 @@ class AuthHandler:
         refresh_token = await self.generate_token(
             refresh_token_payload, self.refresh_token_lifetime
         )
+        await redis_service.set_cache(
+            key=refresh_token_payload["key"],
+            value=user.id,
+            ttl=self.refresh_token_lifetime * 60,
+        )
 
         return LoginResponseSchema(
             access_token=access_token,
@@ -89,6 +95,29 @@ class AuthHandler:
             raise HTTPException(
                 detail="Time is out", status_code=status.HTTP_401_UNAUTHORIZED
             )
+
+    async def get_refresh_token_pair(
+        self, refresh_token: str, session: AsyncSession
+    ) -> LoginResponseSchema:
+        payload = await self.decode_token(refresh_token)
+
+        stored_refresh = await redis_service.get_cache(payload["key"])
+        if not stored_refresh:
+            raise HTTPException(
+                detail="Token was used already", status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        await redis_service.delete_cache(payload["key"])
+        user = await user_manager.get(
+            session=session, field_value=int(payload["sub"]), field=User.id
+        )
+        if not user:
+            raise HTTPException(
+                detail="User not found", status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        token_pair = await self.generate_tokens(user)
+        return token_pair
 
 
 auth_handler = AuthHandler()
