@@ -1,10 +1,12 @@
 import socket
 from asyncio import sleep
+from uuid import uuid4
 
-from fastapi import APIRouter
+from fastapi import APIRouter, File, UploadFile
 from fastapi_cache.decorator import cache
 from services.betterstack_service import betterstack_logger
 from settings import settings
+from storage.s3 import s3_storage
 
 from .schemas import BaseBackendInfoSchema, DatabaseInfoSchema
 
@@ -51,3 +53,10 @@ async def get_database_info() -> DatabaseInfoSchema:
 async def heavy_endpoint(some_param: str) -> dict:
     await sleep(5)
     return {"some_param": some_param * 2}
+
+
+@info_router.post("/test-upload-files")
+async def upload_files(files: list[UploadFile] = File(...)) -> dict:
+    uuid_id = uuid4()
+    urls = await s3_storage.upload_files(files, uuid_id)
+    return {"urls": urls}

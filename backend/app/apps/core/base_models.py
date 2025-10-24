@@ -1,10 +1,15 @@
+import uuid
 from datetime import datetime
 
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, declared_attr
-from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.sql import func
-
 from settings import settings
+from sqlalchemy.ext.asyncio import (
+    AsyncAttrs,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
+from sqlalchemy.sql import func
 
 engine = create_async_engine(
     settings.DATABASE_ASYNC_URL,
@@ -14,7 +19,10 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_recycle=1800,
 )
-async_session_maker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+async_session_maker = async_sessionmaker(
+    engine, expire_on_commit=False, class_=AsyncSession
+)
+
 
 class Base(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
@@ -24,4 +32,14 @@ class Base(AsyncAttrs, DeclarativeBase):
 
     @declared_attr.directive
     def __tablename__(cls) -> str:
-        return cls.__name__.lower() + 's'
+        return cls.__name__.lower() + "s"
+
+
+class UpdatedAtMixin:
+    updated_at: Mapped[datetime] = mapped_column(
+        default=func.now(), onupdate=func.now()
+    )
+
+
+class UUIDMixin:
+    uuid_data: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4)
