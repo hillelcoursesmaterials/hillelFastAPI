@@ -27,6 +27,9 @@ class Product(UpdatedAtMixin, UUIDMixin, Base):
     )
 
     category = relationship("Category", back_populates="products")
+    order_products = relationship(
+        "OrderProduct", back_populates="product", lazy="selectin"
+    )
 
     def __str__(self) -> str:
         return f"<Product {self.title} - #{self.id}, current price: {self.price}>"
@@ -51,6 +54,7 @@ class OrderProduct(UpdatedAtMixin, Base):
     quantity: Mapped[int] = mapped_column(default=0)
 
     order = relationship("Order", back_populates="products", lazy="selectin")
+    product = relationship("Product", back_populates="order_products", lazy="selectin")
 
     __table_args__ = (
         UniqueConstraint("order_id", "product_id", name="uq_order_product"),
