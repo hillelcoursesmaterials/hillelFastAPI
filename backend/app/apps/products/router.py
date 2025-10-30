@@ -227,6 +227,7 @@ async def get_products(
 async def get_current_order(
     order: Order = Depends(get_order),
 ) -> OrderSchema:
+    order = await order_manager.get_order_with_products(order, None)
     response = OrderSchema.from_orm(order)
     return response
 
@@ -257,6 +258,6 @@ async def change_order_product_quantity(
     )
 
     updated_order = await order_manager.get_order_with_products(
-        order_id=order.id, session=session
+        order=order.id, session=session
     )
     return updated_order
