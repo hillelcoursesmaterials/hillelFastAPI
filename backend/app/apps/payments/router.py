@@ -1,8 +1,11 @@
 import stripe
-from apps.payments.schemas import PaymentUrlSchema
+from apps.core.dependencies import get_async_session
+from apps.payments.schemas import PaymentUrlSchema, SetOrderToClosedSchema
 from apps.products.dependencies import Order, get_order, order_manager
+from apps.users.crud import User, user_manager
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from settings import settings
+from sqlalchemy.ext.asyncio import AsyncSession
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -10,7 +13,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 payment_router = APIRouter()
 
 
-@payment_router.post("/get-payment-url")
+@payment_router.get("/get-payment-url")
 async def get_payment_url(
     request: Request, order: Order = Depends(get_order)
 ) -> PaymentUrlSchema:
@@ -48,3 +51,48 @@ async def get_payment_url(
     )
 
     return PaymentUrlSchema(url=session_stripe["url"])
+
+
+@payment_router.post("/webhook")
+async def process_payment_stripe(
+    stripe_data: dict,
+    session: AsyncSession = Depends(get_async_session),
+):
+    if not stripe_data:
+        return
+
+    try:
+        event = stripe.Event.construct_from(stripe_data, settings.STRIPE_SECRET_KEY)
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(
+            detail="NO STRIPE DATA", status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not event["type"] == "checkout.session.completed":
+        return
+
+    user_id = int(event["data"]["object"]["metadata"]["user_id"])
+    user = await user_manager.get(field=User.id, field_value=user_id, session=session)
+    if not user:
+        raise HTTPException(detail="No user", status_code=status.HTTP_400_BAD_REQUEST)
+
+    order = await order_manager.get_or_create(
+        user_id=user_id, is_closed=False, session=session
+    )
+    if order.id != int(event["data"]["object"]["metadata"]["order_id"]):
+        # for sentry log
+        raise ValueError("outdated order data")
+
+    paid = float(stripe_data["data"]["object"]["amount_total"]) / 100
+    if order.cost != paid:
+        # for sentry log
+        raise ValueError("order cost is not equal paid amount")
+
+    await order_manager.patch(
+        instance_id=order.id,
+        session=session,
+        data_to_patch=SetOrderToClosedSchema(),
+        exclude_unset=False,
+    )
+
+    return {f"{order.id=} closed": True}
