@@ -1,0 +1,84 @@
+x-service-backend-common: &service-backend-common
+  image: hillelfastapi/shop-api:latest
+  restart: always
+  command: |
+    sh -c "
+    alembic upgrade head && \
+    gunicorn main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:12321 --workers 1
+    "
+  networks:
+    - main_network
+  env_file:
+    - .env
+  labels:
+    - "com.centurylinklabs.watchtower.enable=true"
+  deploy:
+    resources:
+      limits:
+        cpus: "0.5"
+        memory: "256M"
+      reservations:
+        cpus: "0.2"
+        memory: "128M"
+
+services:
+  backend1:
+    <<: *service-backend-common
+    container_name: backend1
+    hostname: backend1
+    ports:
+      - "12345:12321"
+
+  backend2:
+    <<: *service-backend-common
+    container_name: backend2
+    hostname: backend2
+    ports:
+      - "12346:12321"
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "
+        trap exit TERM;
+        while :; do
+          certbot renew;
+          sleep 12h & wait \$!;
+        done
+      "
+    restart: unless-stopped
+    networks:
+      - main_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: "150M"
+
+
+  watchtower:
+    image: nickfedor/watchtower:latest
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: >
+      --interval 15
+      --cleanup
+      --rolling-restart
+      --label-enable
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: "50M"
+
+networks:
+  main_network:
+    driver: bridge
