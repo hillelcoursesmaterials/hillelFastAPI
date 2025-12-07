@@ -39,3 +39,13 @@ async def force_logout(
     await user_manager.patch(
         user.id, data_to_patch=ForceLogoutSchema(), session=session, exclude_unset=False
     )
+
+
+@router_auth.post("/force-logout2", status_code=status.HTTP_204_NO_CONTENT)
+async def force_logout2(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    await user_manager.patch(
+        user.id, data_to_patch=ForceLogoutSchema(), session=session, exclude_unset=False
+    )
